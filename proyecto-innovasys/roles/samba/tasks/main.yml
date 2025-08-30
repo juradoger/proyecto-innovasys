@@ -1,0 +1,53 @@
+---
+- name: Instalar Samba
+  apt:
+   name: "{{ samba_package }}"
+   state: present
+   update_cache: yes
+
+- name: Crear grupo desarrolladores
+  group:
+   name: "{{ samba_group }}"
+   state: present
+
+- name: Crear directorio compartido
+  file:
+   path: "{{ samba_share_dir }}"
+   state: directory
+   owner: root
+   group: "{{ samba_group }}"
+   mode: '2770'
+
+- name: Crear usuario de sistema
+  user:
+   name: "{{ samba_user }}"
+   group: "{{ samba_group }}"
+   shell: /usr/sbin/nologin
+   create_home: no
+   state: present
+
+- name: Configurar recurso Samba en smb.conf
+  blockinfile:
+   path: /etc/samba/smb.conf
+   marker: "# {mark} ANSIBLE MANAGED BLOCK"
+   block: |
+    [Proyectos]
+    path = {{ samba_share_dir }}
+    browsable = yes
+    writable = yes
+    valid users = @{{ samba_group }}
+    create mask = 0770
+    directory mask = 0770
+  notify: Reiniciar Samba
+
+- name: Establecer contrasena de Samba
+  shell: |
+   (echo "{{ samba_password }}"; echo "{{ samba_password }}") | smbpasswd -s -a {{ samba_user }}
+  args:
+   creates: "/var/lib/samba/private/{{ samba_user }}.tdb"
+
+- name: Asegurar que Samba este habilitado y ejecutandose
+  service:
+   name: "{{ samba_service }}"
+   state: started
+   enabled: yes

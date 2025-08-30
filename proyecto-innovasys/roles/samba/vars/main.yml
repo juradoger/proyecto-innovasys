@@ -1,0 +1,5 @@
+samba_package: samba
+samba_service: smbd
+samba_share_dir: /srv/samba/proyectos
+samba_group: desarrolladores
+samba_user: devuser1

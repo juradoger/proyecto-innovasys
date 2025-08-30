@@ -1,0 +1,19 @@
+---
+- name: Instalar Apache
+  apt:
+   name: "{{ apache_package }}"
+   state: present
+   update_cache: yes
+
+- name: Copiar pagina de bienvenida personalizada
+  template:
+   src: index.html.j2
+   dest: /var/www/html/index.html
+   mode: '0644'
+  notify: Reiniciar Apache
+
+- name: Asegurar que Apache este habilitado y ejecutandose
+  service:
+   name: "{{ apache_service }}"
+   state: started
+   enabled: yes
